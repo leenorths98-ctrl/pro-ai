@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Glowie — 올리브영 제품 수집기</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Fraunces:opsz,wght@9..144,700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0F0F0F;--surf:#1A1A1A;--surf2:#222;--bord:#2E2E2E;
+  --ink:#F5F3EF;--ink2:#A0A0A0;--ink3:#505050;
+  --acc:#C8815A;--accL:rgba(200,129,90,.15);
+  --grn:#4A9C6A;--grnL:rgba(74,156,106,.15);
+  --red:#E05555;--redL:rgba(224,85,85,.12);
+  --purple:#8B7CF6;--purpleL:rgba(139,124,246,.15);
+  --r:10px;
+}
+body{background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',sans-serif;min-height:100vh;padding-bottom:90px}
+.hdr{background:var(--surf);border-bottom:1px solid var(--bord);padding:14px 24px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100}
+.hdr-logo{font-family:'Fraunces',serif;font-size:20px;color:var(--acc)}
+.hdr-title{font-size:13px;color:var(--ink2)}
+.hdr-cnt{margin-left:auto;background:var(--accL);color:var(--acc);font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;border:1px solid rgba(200,129,90,.3)}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 20px}
+.card{background:var(--surf);border:1px solid var(--bord);border-radius:14px;padding:20px;margin-bottom:16px}
+.card-title{font-size:11px;font-weight:700;color:var(--ink2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+/* BOOKMARKLET */
+.bm-wrap{background:linear-gradient(135deg,rgba(139,124,246,.08),rgba(200,129,90,.08));border:1px solid rgba(139,124,246,.25);border-radius:12px;padding:18px}
+.bm-title{font-size:14px;font-weight:700;margin-bottom:8px}
+.bm-desc{font-size:12px;color:var(--ink2);line-height:1.8;margin-bottom:14px}
+.bm-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.bm-step{background:var(--surf2);border:1px solid var(--bord);border-radius:8px;padding:12px;text-align:center}
+.bm-num{width:26px;height:26px;background:var(--purpleL);color:var(--purple);border-radius:50%;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;margin:0 auto 8px}
+.bm-step-txt{font-size:11px;color:var(--ink2);line-height:1.6}
+.bm-step-txt b{color:var(--ink);display:block}
+.bm-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.bm-link{padding:12px 22px;background:var(--purple);color:#fff;border-radius:var(--r);font-size:14px;font-weight:700;text-decoration:none;display:inline-block;cursor:grab;border:2px dashed transparent;transition:all .2s;white-space:nowrap}
+.bm-link:hover{background:#7A6CE6;border-color:rgba(255,255,255,.4);transform:translateY(-2px)}
+.bm-hint{font-size:11px;color:var(--ink3);line-height:1.8}
+.bm-hint b{color:var(--ink2)}
+
+/* SETTINGS */
+.settings-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fld{display:flex;flex-direction:column;gap:5px}
+.fld-lbl{font-size:11px;font-weight:700;color:var(--ink2)}
+input[type=text],input[type=password]{width:100%;background:var(--surf2);border:1.5px solid var(--bord);border-radius:var(--r);color:var(--ink);font-family:'Noto Sans KR',sans-serif;font-size:12px;padding:9px 12px;outline:none;transition:border .15s}
+input:focus{border-color:var(--acc)}
+input::placeholder{color:var(--ink3)}
+.pw-row{display:flex;gap:6px}
+.pw-row input{flex:1}
+.eye-btn{padding:9px 12px;background:var(--surf2);border:1.5px solid var(--bord);border-radius:var(--r);color:var(--ink2);cursor:pointer;font-size:13px;transition:all .15s}
+.eye-btn:hover{border-color:var(--acc)}
+
+/* CAT */
+.cat-row{display:flex;gap:7px;flex-wrap:wrap}
+.cat-btn{padding:5px 11px;background:var(--surf2);border:1.5px solid var(--bord);border-radius:20px;color:var(--ink2);font-size:11px;cursor:pointer;transition:all .15s;font-family:'Noto Sans KR',sans-serif}
+.cat-btn.on{background:var(--accL);border-color:var(--acc);color:var(--acc);font-weight:700}
+
+/* MANUAL INPUT */
+textarea{width:100%;background:var(--surf2);border:1.5px solid var(--bord);border-radius:var(--r);color:var(--ink);font-family:'Noto Sans KR',sans-serif;font-size:12px;padding:10px 12px;resize:vertical;outline:none;line-height:1.8}
+textarea:focus{border-color:var(--acc)}
+textarea::placeholder{color:var(--ink3)}
+.manual-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+
+/* BUTTONS */
+.btn{padding:10px 18px;border:none;border-radius:var(--r);font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none!important}
+.btn-acc{background:var(--acc);color:#fff}.btn-acc:not(:disabled):hover{background:#B8704A;transform:translateY(-1px)}
+.btn-grn{background:var(--grn);color:#fff}.btn-grn:not(:disabled):hover{background:#3A8A5A;transform:translateY(-1px)}
+.btn-ghost{background:none;border:1.5px solid var(--bord);color:var(--ink2)}.btn-ghost:not(:disabled):hover{border-color:var(--acc);color:var(--acc)}
+.action-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:var(--surf2);color:var(--ink2);font-weight:700;padding:10px 8px;text-align:left;border-bottom:2px solid var(--bord);font-size:10px;letter-spacing:.5px;white-space:nowrap}
+td{padding:7px 8px;border-bottom:1px solid var(--bord);vertical-align:top}
+tr:hover td{background:rgba(255,255,255,.015)}
+td input,td select{background:var(--surf2);border:1px solid var(--bord);border-radius:6px;color:var(--ink);font-family:'Noto Sans KR',sans-serif;font-size:11px;padding:4px 7px;outline:none;transition:border .15s;width:100%}
+td input:focus,td select:focus{border-color:var(--acc)}
+
+.thumb{width:44px;height:44px;object-fit:cover;border-radius:6px;background:var(--surf2);display:block}
+.thumb-ph{width:44px;height:44px;border-radius:6px;background:var(--surf2);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--ink3)}
+
+/* CHIPS */
+.chip-group{display:flex;flex-wrap:wrap;gap:3px}
+.chip{font-size:10px;padding:2px 6px;border-radius:4px;cursor:pointer;transition:all .12s;white-space:nowrap;user-select:none;border:1px solid transparent}
+.chip-skin{background:var(--accL);color:var(--acc);border-color:rgba(200,129,90,.2)}
+.chip-concern{background:var(--grnL);color:var(--grn);border-color:rgba(74,156,106,.2)}
+.chip.off{opacity:.2;background:var(--surf2);border-color:var(--bord)}
+.chip:hover{opacity:1!important}
+
+.tbl-empty{text-align:center;padding:56px;color:var(--ink3);font-size:14px;line-height:2}
+
+/* BOTTOM */
+.bottom{position:fixed;bottom:0;left:0;right:0;background:var(--surf);border-top:1px solid var(--bord);padding:12px 24px;display:flex;align-items:center;gap:10px;z-index:100}
+.bottom-cnt{font-size:13px;color:var(--ink2)}
+.bottom-cnt b{color:var(--acc);font-size:20px;margin-right:2px}
+
+/* NOTIFY */
+.notify{position:fixed;top:70px;right:20px;background:var(--grn);color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:700;z-index:999;display:none;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--surf)}
+::-webkit-scrollbar-thumb{background:var(--bord);border-radius:3px}
+</style>
+</head>
+<body>
+
+<div class="notify" id="notify"></div>
+
+<div class="hdr">
+  <div class="hdr-logo">Glowie</div>
+  <div class="hdr-title">올리브영 제품 수집기</div>
+  <div class="hdr-cnt" id="hdrCnt">0개 대기중</div>
+</div>
+
+<div class="wrap">
+
+  <!-- 북마크릿 -->
+  <div class="card">
+    <div class="card-title">🔖 설치 방법 (1회만)</div>
+    <div class="bm-wrap">
+      <div class="bm-title">올리브영 페이지에서 클릭 한 번으로 자동 추가!</div>
+      <div class="bm-desc">URL 복사·붙여넣기 없이, 올리브영 제품 페이지에서 북마크만 클릭하면 제품명·가격·별점·리뷰·이미지가 자동으로 여기에 추가돼요.</div>
+      <div class="bm-steps">
+        <div class="bm-step"><div class="bm-num">1</div><div class="bm-step-txt"><b>아래 보라색 버튼</b>을 즐겨찾기 바에 드래그앤드롭</div></div>
+        <div class="bm-step"><div class="bm-num">2</div><div class="bm-step-txt"><b>올리브영</b>에서 원하는 제품 페이지 열기</div></div>
+        <div class="bm-step"><div class="bm-num">3</div><div class="bm-step-txt">즐겨찾기에 저장한 <b>Glowie 추가</b> 클릭</div></div>
+        <div class="bm-step"><div class="bm-num">4</div><div class="bm-step-txt">이 도구로 돌아오면 <b>제품이 자동으로</b> 추가돼 있어요!</div></div>
+      </div>
+      <div class="bm-row">
+        <a id="bmLink" class="bm-link" href="#">⭐ Glowie에 추가</a>
+        <div class="bm-hint">
+          <b>👆 이 버튼을 브라우저 즐겨찾기 바에 드래그하세요</b><br>
+          즐겨찾기 바 안 보이면: Chrome → Ctrl+Shift+B (Mac: Cmd+Shift+B)<br>
+          모바일은 지원 안 돼요. PC 크롬/엣지에서 사용하세요.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supabase 설정 -->
+  <div class="card">
+    <div class="card-title">⚙️ Supabase 연결</div>
+    <div class="settings-row">
+      <div class="fld">
+        <div class="fld-lbl">Supabase URL</div>
+        <input type="text" id="sbUrl" value="https://hwajzlehsfqrgpywjgit.supabase.co"/>
+      </div>
+      <div class="fld">
+        <div class="fld-lbl">Anon Key</div>
+        <div class="pw-row">
+          <input type="password" id="sbKey" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3YWp6bGVoc2ZxcmdweXdqZ2l0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMjU2MzcsImV4cCI6MjA4NzcwMTYzN30.B1fw50cLpZeTH9yxWZZkl1k-rq82XsiLUN6n_g7Dkuk"/>
+          <button class="eye-btn" onclick="toggleKey()">👁</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 직접 입력 -->
+  <div class="card">
+    <div class="card-title">✏️ 직접 입력</div>
+    <div class="fld" style="margin-bottom:12px">
+      <div class="fld-lbl" style="margin-bottom:7px">카테고리</div>
+      <div class="cat-row" id="catRow"></div>
+    </div>
+    <div class="manual-grid">
+      <div class="fld">
+        <div class="fld-lbl">제품명 * (한 줄에 하나)</div>
+        <textarea id="taNames" rows="5" placeholder="라운드랩 1025 독도 토너&#10;코스알엑스 어드밴시카 시카 세럼&#10;토리든 다이브인 히알루론산 세럼"></textarea>
+      </div>
+      <div class="fld">
+        <div class="fld-lbl">가격 (원)</div>
+        <textarea id="taPrices" rows="5" placeholder="16000&#10;21000&#10;19000"></textarea>
+      </div>
+      <div class="fld">
+        <div class="fld-lbl">별점</div>
+        <textarea id="taRatings" rows="5" placeholder="4.8&#10;4.8&#10;4.9"></textarea>
+      </div>
+      <div class="fld">
+        <div class="fld-lbl">리뷰수</div>
+        <textarea id="taReviews" rows="5" placeholder="29000&#10;31000&#10;22000"></textarea>
+      </div>
+    </div>
+    <div class="action-row">
+      <button class="btn btn-acc" onclick="manualAdd()">🤖 AI 분석 후 추가</button>
+      <span style="font-size:11px;color:var(--ink3)">제품명만 있어도 성분·피부타입·피부고민 자동 완성!</span>
+    </div>
+  </div>
+
+  <!-- 결과 테이블 -->
+  <div class="card">
+    <div class="card-title">
+      📊 수집된 제품
+      <span id="tblCnt" style="font-size:11px;color:var(--ink3);font-weight:400;text-transform:none;letter-spacing:0;margin-left:4px"></span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>이미지</th>
+            <th style="min-width:160px">제품명</th>
+            <th style="width:80px">브랜드</th>
+            <th style="width:90px">카테고리</th>
+            <th style="min-width:200px">주요 성분</th>
+            <th style="min-width:160px">피부타입 (클릭 토글)</th>
+            <th style="min-width:220px">피부 고민 (클릭 토글)</th>
+            <th style="width:65px">가격</th>
+            <th style="width:50px">별점</th>
+            <th style="width:65px">리뷰수</th>
+            <th style="min-width:110px">올리브영 링크</th>
+            <th style="width:50px">삭제</th>
+          </tr>
+        </thead>
+        <tbody id="tblBody">
+          <tr><td colspan="12" class="tbl-empty">🔖 북마크릿으로 올리브영 제품을 추가하거나<br>직접 입력으로 제품을 추가해보세요</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<div class="bottom">
+  <div class="bottom-cnt"><b id="bottomCnt">0</b> 개 수집됨</div>
+  <button class="btn btn-grn" id="btnSave" onclick="saveToSupabase()" disabled>☁️ Supabase 저장</button>
+  <button class="btn btn-ghost" id="btnCsv" onclick="exportCSV()" disabled>⬇️ CSV 다운로드</button>
+  <button class="btn btn-ghost" onclick="clearAll()" style="margin-left:auto">🗑 전체 초기화</button>
+</div>
+
+<script>
+const CATEGORIES=[
+  {id:"toner",label:"스킨/토너"},{id:"essence",label:"세럼/앰플"},
+  {id:"cream",label:"크림"},{id:"lotion",label:"로션/오일"},
+  {id:"cleansing",label:"클렌징폼"},{id:"cleansing_oil",label:"클렌징오일"},
+  {id:"peeling",label:"필링"},{id:"sunscreen",label:"선케어"},
+  {id:"mask",label:"마스크팩"},{id:"body",label:"바디케어"},
+];
+const SKIN_TYPES=["지성","건성","복합성","민감성"];
+const CONCERNS=["여드름","여드름흔적","붉은자국","모공","블랙헤드","수분부족","칙칙함","민감","등드름"];
+
+let selectedCat="essence";
+let rows=[];
+
+function renderCats(){
+  document.getElementById("catRow").innerHTML=CATEGORIES.map(c=>
+    `<button class="cat-btn${selectedCat===c.id?" on":""}" onclick="selCat('${c.id}')">${c.label}</button>`
+  ).join("");
+}
+function selCat(id){selectedCat=id;renderCats();}
+renderCats();
+function toggleKey(){const e=document.getElementById("sbKey");e.type=e.type==="password"?"text":"password";}
+
+// ── 성분 + 피부타입 + 피부고민 통합 DB ──
+const BRAND_DB={
+  "라운드랩":["라운드랩","round lab"],"코스알엑스":["코스알엑스","cosrx"],
+  "이니스프리":["이니스프리","innisfree"],"토리든":["토리든","torriden"],
+  "마녀공장":["마녀공장","manyo"],"닥터지":["닥터지","dr.g"],
+  "닥터자르트":["닥터자르트","dr.jart"],"메디힐":["메디힐","mediheal"],
+  "미샤":["미샤","missha"],"아벤느":["아벤느","avene"],"비오엘":["비오엘","biol"],
+  "스킨1004":["스킨1004","skin1004"],"넘버즈인":["넘버즈인","numbuzin"],
+  "티르티르":["티르티르","tirtir"],"조선미녀":["조선미녀","beauty of joseon"],
+  "VT":["vt코스메틱","vt코"],"피지오겔":["피지오겔","physiogel"],
+  "세타필":["세타필","cetaphil"],"CNP":["cnp","씨엔피"],
+  "파울라스초이스":["파울라스초이스","paula"],"제이준":["제이준","jayjun"],
+  "아이소이":["아이소이","isoi"],"헉슬리":["헉슬리","huxley"],
+  "라로슈포제":["라로슈포제","la roche"],"설화수":["설화수"],
+  "클리오":["클리오","clio"],"바이오더마":["바이오더마","bioderma"],
+};
+// 키워드 → { 성분, 피부타입, 피부고민, 태그 }
+const INGR_DB=[
+  {k:"독도",       i:"독도 해양심층수, 히알루론산, 판테놀",           st:["건성","복합성","민감성"], cn:["수분부족","붉은자국","민감"],           tg:["수분","진정"]},
+  {k:"자작나무",   i:"자작나무 수액, 히알루론산, 판테놀",             st:["건성","복합성","민감성"], cn:["수분부족","민감"],                      tg:["수분","저자극"]},
+  {k:"어드밴시카", i:"센텔라아시아티카, 마데카소사이드, 판테놀",       st:["지성","복합성","민감성"], cn:["여드름","붉은자국","여드름흔적","민감"], tg:["진정","시카"]},
+  {k:"시카페어",   i:"센텔라아시아티카, 판테놀, 마데카소사이드",       st:["민감성","건성"],          cn:["여드름","붉은자국","민감"],             tg:["시카","장벽강화"]},
+  {k:"시카",       i:"센텔라아시아티카, 마데카소사이드, 판테놀",       st:["민감성","지성","복합성"], cn:["여드름","붉은자국","여드름흔적"],        tg:["진정","시카"]},
+  {k:"센텔라",     i:"센텔라아시아티카, 마데카소사이드, 판테놀",       st:["민감성","지성","복합성"], cn:["여드름","붉은자국"],                    tg:["진정","시카"]},
+  {k:"다이브인",   i:"저분자 히알루론산 5종, 판테놀, 세라마이드",      st:["건성","복합성","민감성"], cn:["수분부족","민감"],                      tg:["수분폭탄","보습"]},
+  {k:"히알루론산", i:"저분자 히알루론산 5종, 판테놀, 베타인",          st:["건성","복합성","민감성"], cn:["수분부족","민감"],                      tg:["수분","보습"]},
+  {k:"NMF",        i:"NMF, 히알루론산, 아미노산",                      st:["건성","복합성","민감성"], cn:["수분부족","민감"],                      tg:["수분폭탄","보습"]},
+  {k:"세라마이드", i:"세라마이드, 히알루론산, 판테놀",                 st:["건성","민감성"],          cn:["수분부족","민감"],                      tg:["장벽강화","보습"]},
+  {k:"비피다",     i:"비피다 발효여과물, 판테놀, 나이아신아마이드",    st:["건성","민감성","복합성"], cn:["수분부족","붉은자국","민감"],            tg:["장벽강화","진정"]},
+  {k:"갈락토미세스",i:"갈락토미세스 발효여과물, 나이아신아마이드",     st:["지성","복합성"],          cn:["칙칙함","여드름흔적","모공"],           tg:["미백","광채"]},
+  {k:"나이아신아마이드",i:"나이아신아마이드, 아연, 판테놀",            st:["지성","복합성"],          cn:["여드름흔적","칙칙함","모공"],           tg:["미백","모공"]},
+  {k:"비타민C",    i:"비타민C, 나이아신아마이드, 글리세린",            st:["지성","복합성","건성"],   cn:["칙칙함","여드름흔적"],                  tg:["미백","항산화"]},
+  {k:"AHA",        i:"AHA, 글리콜산, 판테놀",                          st:["지성","복합성"],          cn:["모공","블랙헤드","여드름흔적","칙칙함"],tg:["각질","모공"]},
+  {k:"BHA",        i:"BHA, 살리실산, 판테놀",                          st:["지성","복합성"],          cn:["모공","여드름","블랙헤드"],             tg:["각질","모공"]},
+  {k:"살리실산",   i:"살리실산, 판테놀, 알로에베라",                   st:["지성","복합성"],          cn:["여드름","모공","등드름"],               tg:["여드름케어","피지"]},
+  {k:"화산송이",   i:"화산송이 분말, 카올린, 녹차",                    st:["지성"],                   cn:["모공","블랙헤드"],                      tg:["모공","피지흡수"]},
+  {k:"레티놀",     i:"레티놀, 히알루론산, 나이아신아마이드",           st:["건성","복합성"],          cn:["칙칙함","수분부족"],                    tg:["안티에이징","탄력"]},
+  {k:"펩타이드",   i:"펩타이드, 히알루론산, 세라마이드",               st:["건성","복합성"],          cn:["수분부족","칙칙함"],                    tg:["탄력","안티에이징"]},
+  {k:"프로폴리스", i:"프로폴리스, 나이아신아마이드, 히알루론산",       st:["건성","복합성"],          cn:["수분부족","칙칙함"],                    tg:["영양","보습"]},
+  {k:"티트리",     i:"티트리, 살리실산, 알로에베라",                   st:["지성","복합성"],          cn:["여드름","모공","등드름"],               tg:["여드름케어","피지"]},
+  {k:"녹차",       i:"녹차 추출물, 히알루론산, 글리세린",              st:["지성","복합성"],          cn:["모공","칙칙함"],                        tg:["항산화","수분"]},
+  {k:"SPF",        i:"자외선차단 성분, 히알루론산, 판테놀",             st:["건성","복합성","민감성"], cn:["수분부족","붉은자국"],                  tg:["자외선차단","수분"]},
+  {k:"선크림",     i:"징크옥사이드, 티타늄다이옥사이드, 판테놀",       st:["민감성","건성","복합성"], cn:["민감","붉은자국"],                      tg:["자외선차단","순한"]},
+  {k:"콜라겐",     i:"가수분해 콜라겐, 히알루론산, 글리세린",          st:["건성","복합성"],          cn:["수분부족","칙칙함"],                    tg:["탄력","보습"]},
+  {k:"로즈",       i:"로즈워터, 히알루론산, 글리세린",                 st:["건성","민감성"],          cn:["수분부족","붉은자국"],                  tg:["수분","진정"]},
+  {k:"스쿠알란",   i:"스쿠알란, 히알루론산, 세라마이드",               st:["건성","민감성"],          cn:["수분부족","민감"],                      tg:["보습","장벽강화"]},
+  {k:"바쿠치올",   i:"바쿠치올, 히알루론산, 스쿠알란",                 st:["민감성","건성"],          cn:["칙칙함","수분부족"],                    tg:["순한안티에이징","탄력"]},
+  {k:"아젤라익",   i:"아젤라익애씨드, 나이아신아마이드, 판테놀",       st:["지성","복합성"],          cn:["여드름","여드름흔적","칙칙함"],          tg:["여드름케어","미백"]},
+];
+const CAT_DEF={
+  toner:       {i:"히알루론산, 글리세린, 판테놀",        st:["건성","복합성"],          cn:["수분부족"],           tg:["수분","보습"]},
+  essence:     {i:"히알루론산, 나이아신아마이드, 판테놀", st:["건성","복합성"],          cn:["수분부족","칙칙함"],   tg:["영양","보습"]},
+  cream:       {i:"세라마이드, 히알루론산, 글리세린",     st:["건성","복합성"],          cn:["수분부족"],           tg:["보습","수분"]},
+  lotion:      {i:"히알루론산, 글리세린, 알로에베라",     st:["건성","복합성"],          cn:["수분부족"],           tg:["수분","가벼운"]},
+  cleansing:   {i:"판테놀, 글리세린, 알로에베라",         st:["건성","복합성","민감성"], cn:["수분부족","민감"],     tg:["저자극","순한"]},
+  cleansing_oil:{i:"호호바오일, 포도씨오일, 판테놀",      st:["지성","복합성"],          cn:["모공","블랙헤드"],     tg:["딥클렌징","오일클렌징"]},
+  peeling:     {i:"AHA, BHA, 판테놀",                    st:["지성","복합성"],          cn:["모공","블랙헤드","칙칙함"],tg:["각질","모공"]},
+  sunscreen:   {i:"자외선차단 성분, 히알루론산, 판테놀",  st:["건성","복합성","민감성"], cn:["수분부족","민감"],     tg:["자외선차단","수분"]},
+  mask:        {i:"히알루론산, 판테놀, 글리세린",         st:["건성","복합성","민감성"], cn:["수분부족"],           tg:["수분폭탄","진정"]},
+  body:        {i:"세라마이드, 시어버터, 글리세린",        st:["건성","복합성"],          cn:["수분부족","등드름"],   tg:["보습","바디"]},
+};
+
+function analyze(name,cat){
+  const lower=name.toLowerCase();
+  let brand="";
+  for(const [b,kws] of Object.entries(BRAND_DB)){
+    if(kws.some(k=>lower.includes(k.toLowerCase()))){brand=b;break;}
+  }
+  let matched=null;
+  for(const d of INGR_DB){
+    if(name.includes(d.k)||lower.includes(d.k.toLowerCase())){matched=d;break;}
+  }
+  const def=CAT_DEF[cat]||CAT_DEF.essence;
+  return{brand,ingredient:matched?.i||def.i,skin_types:[...(matched?.st||def.st)],concerns:[...(matched?.cn||def.cn)],tags:[...(matched?.tg||def.tg)]};
+}
+
+// ── 북마크릿 생성 ──
+function makeBM(){
+  const toolUrl=window.location.href.split('?')[0];
+  const script=`(function(){
+var n=document.querySelector('.prd-name,.goods-name,[class*="prd-name"],[class*="goods-name"],h2.title');
+var name=(n?.innerText||document.title||'').split('\\n')[0].replace(/\\s+/g,' ').replace(/[|].*$/,'').replace(/올리브영.*/,'').trim();
+var priceEl=document.querySelector('[class*="price-2"] strong,[class*="final-price"],[class*="priceArea"] strong,[class*="price"] strong');
+var price=(priceEl?.innerText||'').replace(/[^0-9]/g,'');
+var scoreEl=document.querySelector('[class*="score"],[class*="rvwPoint"],[class*="ratingArea"]');
+var rating=(scoreEl?.innerText||'4.5').match(/[0-9]+\\.[0-9]+/)?.[0]||'4.5';
+var cntEl=document.querySelector('[class*="rvwCnt"],[class*="reviewCnt"],[class*="review-cnt"],[class*="rvw-cnt"]');
+var reviews=(cntEl?.innerText||'0').replace(/[^0-9]/g,'')||'0';
+var imgEl=document.querySelector('.prd-img img,.goods-img img,[class*="prdImg"] img');
+var image=imgEl?.src||'';
+if(!name){alert('제품명을 찾지 못했어요!\\n올리브영 제품 상세 페이지에서 실행해주세요.');return;}
+var data={name,price,rating,reviews,image,url:window.location.href};
+localStorage.setItem('glowie_pending',JSON.stringify(data));
+var w=window.open('${toolUrl}','glowie_tool','width=1200,height=800');
+if(!w){window.location.href='${toolUrl}?add='+encodeURIComponent(JSON.stringify(data));}
+else{setTimeout(function(){w.postMessage({type:'glowie_add',data:data},'*');},1500);}
+alert('✅ '+name+'\\n\\nGlowie 수집 도구에 추가 중이에요!\\n도구 창을 확인해주세요 😊');
+})();`.replace(/\s*\n\s*/g,' ');
+  document.getElementById("bmLink").href="javascript:"+encodeURIComponent(script);
+}
+makeBM();
+
+// 북마크릿 메시지 수신
+window.addEventListener("message",function(e){
+  if(e.data?.type==="glowie_add")addRow(e.data.data);
+});
+// URL 파라미터로 수신
+(function(){
+  const p=new URLSearchParams(window.location.search);
+  const d=p.get("add");
+  if(d){try{addRow(JSON.parse(decodeURIComponent(d)));}catch(e){}
+  window.history.replaceState({},"",window.location.pathname);}
+  // localStorage 확인
+  const pending=localStorage.getItem("glowie_pending");
+  if(pending){try{const d=JSON.parse(pending);localStorage.removeItem("glowie_pending");setTimeout(()=>addRow(d),500);}catch(e){}}
+})();
+
+function addRow(data){
+  const analysis=analyze(data.name,selectedCat);
+  rows.unshift({
+    id:Date.now()+Math.random(),
+    name:data.name,brand:analysis.brand,category:selectedCat,
+    ingredient:analysis.ingredient,
+    skin_types:[...analysis.skin_types],concerns:[...analysis.concerns],tags:[...analysis.tags],
+    price:data.price||"",rating:data.rating||"4.5",reviews:data.reviews||"0",
+    image:data.image||"",oliveyoung:data.url||"",
+  });
+  renderTable();updateCount();
+  showNotify(`✅ "${data.name.slice(0,20)}" 추가됨!`);
+}
+
+// ── 직접 입력 ──
+function manualAdd(){
+  const names=document.getElementById("taNames").value.trim().split("\n").map(s=>s.trim()).filter(Boolean);
+  if(!names.length){alert("제품명을 입력해주세요!");return;}
+  const prices=document.getElementById("taPrices").value.trim().split("\n");
+  const ratings=document.getElementById("taRatings").value.trim().split("\n");
+  const reviews=document.getElementById("taReviews").value.trim().split("\n");
+  names.forEach((name,i)=>{
+    const a=analyze(name,selectedCat);
+    rows.push({
+      id:Date.now()+i+Math.random(),name,brand:a.brand,category:selectedCat,
+      ingredient:a.ingredient,skin_types:[...a.skin_types],concerns:[...a.concerns],tags:[...a.tags],
+      price:(prices[i]||"").replace(/[^0-9]/g,""),
+      rating:(ratings[i]||"4.5").trim(),
+      reviews:(reviews[i]||"0").replace(/[^0-9]/g,""),
+      image:"",oliveyoung:"",
+    });
+  });
+  renderTable();updateCount();
+  ["taNames","taPrices","taRatings","taReviews"].forEach(id=>document.getElementById(id).value="");
+  showNotify(`✅ ${names.length}개 추가됨!`);
+}
+
+// ── 테이블 렌더 ──
+function renderTable(){
+  const tbody=document.getElementById("tblBody");
+  if(!rows.length){
+    tbody.innerHTML=`<tr><td colspan="12" class="tbl-empty">🔖 북마크릿으로 올리브영 제품을 추가하거나<br>직접 입력으로 제품을 추가해보세요</td></tr>`;
+    return;
+  }
+  tbody.innerHTML=rows.map(r=>`
+    <tr>
+      <td>${r.image?`<img class="thumb" src="${r.image}" onerror="this.style.display='none'"/>`:`<div class="thumb-ph">📦</div>`}</td>
+      <td><input value="${esc(r.name)}" onchange="upd(${r.id},'name',this.value)"/></td>
+      <td><input value="${esc(r.brand)}" onchange="upd(${r.id},'brand',this.value)"/></td>
+      <td>
+        <select onchange="upd(${r.id},'category',this.value)">
+          ${CATEGORIES.map(c=>`<option value="${c.id}"${r.category===c.id?" selected":""}>${c.label}</option>`).join("")}
+        </select>
+      </td>
+      <td><input value="${esc(r.ingredient)}" onchange="upd(${r.id},'ingredient',this.value)"/></td>
+      <td>
+        <div class="chip-group">
+          ${SKIN_TYPES.map(s=>`<span class="chip chip-skin${r.skin_types.includes(s)?"":" off"}" onclick="toggleChip(${r.id},'skin_types','${s}')">${s}</span>`).join("")}
+        </div>
+      </td>
+      <td>
+        <div class="chip-group">
+          ${CONCERNS.map(c=>`<span class="chip chip-concern${r.concerns.includes(c)?"":" off"}" onclick="toggleChip(${r.id},'concerns','${c}')">${c}</span>`).join("")}
+        </div>
+      </td>
+      <td><input type="number" value="${r.price}" onchange="upd(${r.id},'price',this.value)" style="width:60px"/></td>
+      <td><input type="number" step="0.1" value="${r.rating}" onchange="upd(${r.id},'rating',this.value)" style="width:46px"/></td>
+      <td><input type="number" value="${r.reviews}" onchange="upd(${r.id},'reviews',this.value)" style="width:60px"/></td>
+      <td><input value="${esc(r.oliveyoung)}" placeholder="링크" onchange="upd(${r.id},'oliveyoung',this.value)"/></td>
+      <td><button onclick="delRow(${r.id})" style="padding:5px 8px;background:none;border:1px solid var(--bord);border-radius:6px;color:var(--red);font-size:11px;cursor:pointer">삭제</button></td>
+    </tr>
+  `).join("");
+  document.getElementById("tblCnt").textContent=`(${rows.length}개)`;
+}
+
+function esc(s){return String(s||"").replace(/"/g,"&quot;").replace(/</g,"&lt;")}
+function upd(id,k,v){const r=rows.find(r=>r.id===id);if(r)r[k]=v;}
+function toggleChip(id,key,val){
+  const r=rows.find(r=>r.id===id);if(!r)return;
+  r[key]=r[key].includes(val)?r[key].filter(x=>x!==val):[...r[key],val];
+  renderTable();
+}
+function delRow(id){rows=rows.filter(r=>r.id!==id);renderTable();updateCount();}
+function clearAll(){if(!rows.length||confirm("전체 초기화할까요?")){rows=[];renderTable();updateCount();}}
+function updateCount(){
+  const n=rows.length;
+  document.getElementById("bottomCnt").textContent=n;
+  document.getElementById("hdrCnt").textContent=`${n}개 대기중`;
+  document.getElementById("btnSave").disabled=n===0;
+  document.getElementById("btnCsv").disabled=n===0;
+}
+
+// ── Supabase 저장 ──
+async function saveToSupabase(){
+  const url=document.getElementById("sbUrl").value.trim();
+  const key=document.getElementById("sbKey").value.trim();
+  if(!url||!key){alert("Supabase URL과 Key를 확인해주세요!");return;}
+  const btn=document.getElementById("btnSave");
+  btn.disabled=true;btn.textContent="저장 중...";
+  let ok=0,fail=0;
+  for(const r of rows){
+    try{
+      const res=await fetch(`${url}/rest/v1/products`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json","apikey":key,"Authorization":`Bearer ${key}`,"Prefer":"return=minimal"},
+        body:JSON.stringify({
+          category:r.category,name:r.name,brand:r.brand,image:r.image,
+          price:Number(r.price)||0,rating:Number(r.rating)||4.5,reviews:Number(r.reviews)||0,
+          oliveyoung:r.oliveyoung,ingredient:r.ingredient,
+          skin_types:r.skin_types,concerns:r.concerns,tags:r.tags,
+        }),
+      });
+      res.ok?ok++:fail++;
+    }catch(e){fail++;}
+  }
+  btn.disabled=false;btn.innerHTML="☁️ Supabase 저장";
+  if(fail===0){
+    showNotify(`🎉 ${ok}개 저장 완료!`);
+    rows=[];renderTable();updateCount();
+  } else {
+    alert(`✅ ${ok}개 성공\n⚠️ ${fail}개 실패\n\nRLS 정책을 확인해주세요.`);
+  }
+}
+
+// ── CSV ──
+function exportCSV(){
+  const h=["category","name","brand","image","price","rating","reviews","oliveyoung","ingredient","skin_types","concerns","tags"];
+  const body=rows.map(r=>[r.category,r.name,r.brand,r.image,r.price,r.rating,r.reviews,r.oliveyoung,r.ingredient,JSON.stringify(r.skin_types),JSON.stringify(r.concerns),JSON.stringify(r.tags)]);
+  const csv=[h,...body].map(row=>row.map(c=>{const s=String(c||"");return s.includes(",")||s.includes('"')?`"${s.replace(/"/g,'""')}"`:`${s}`}).join(",")).join("\n");
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"}));
+  a.download=`glowie_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+function showNotify(msg){
+  const el=document.getElementById("notify");
+  el.textContent=msg;el.style.display="block";
+  setTimeout(()=>el.style.display="none",3000);
+}
+</script>
+</body>
+</html>
