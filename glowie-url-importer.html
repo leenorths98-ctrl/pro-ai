@@ -332,42 +332,36 @@ function analyze(name,cat){
 // ── 북마크릿 생성 ──
 function makeBM(){
   const toolUrl=window.location.href.split('?')[0];
+  // 방식 변경: window.open/postMessage 완전 제거
+  // 올리브영에서 추출 → URL 파라미터에 담아 수집기로 직접 이동
   const script=`(function(){
-var n=document.querySelector('.prd-name,.goods-name,[class*="prd-name"],[class*="goods-name"],h2.title');
-var name=(n?.innerText||document.title||'').split('\\n')[0].replace(/\\s+/g,' ').replace(/[|].*$/,'').replace(/올리브영.*/,'').trim();
-var priceEl=document.querySelector('[class*="price-2"] strong,[class*="final-price"],[class*="priceArea"] strong,[class*="price"] strong');
-var price=(priceEl?.innerText||'').replace(/[^0-9]/g,'');
-var scoreEl=document.querySelector('[class*="score"],[class*="rvwPoint"],[class*="ratingArea"]');
-var rating=(scoreEl?.innerText||'4.5').match(/[0-9]+\\.[0-9]+/)?.[0]||'4.5';
-var cntEl=document.querySelector('[class*="rvwCnt"],[class*="reviewCnt"],[class*="review-cnt"],[class*="rvw-cnt"]');
-var reviews=(cntEl?.innerText||'0').replace(/[^0-9]/g,'')||'0';
-var imgEl=document.querySelector('.prd-img img,.goods-img img,[class*="prdImg"] img');
-var image=imgEl?.src||'';
-if(!name){alert('제품명을 찾지 못했어요!\\n올리브영 제품 상세 페이지에서 실행해주세요.');return;}
-var data={name,price,rating,reviews,image,url:window.location.href};
-localStorage.setItem('glowie_pending',JSON.stringify(data));
-var w=window.open('${toolUrl}','glowie_tool','width=1200,height=800');
-if(!w){window.location.href='${toolUrl}?add='+encodeURIComponent(JSON.stringify(data));}
-else{setTimeout(function(){w.postMessage({type:'glowie_add',data:data},'*');},1500);}
-alert('✅ '+name+'\\n\\nGlowie 수집 도구에 추가 중이에요!\\n도구 창을 확인해주세요 😊');
-})();`.replace(/\s*\n\s*/g,' ');
+var g=function(s){for(var i=0;i<s.length;i++){var e=document.querySelector(s[i]);if(e&&e.innerText.trim())return e.innerText.trim();}return '';};
+var name=g(['.prd-name','.goods-name','[class*="prdName"]','[class*="goodsName"]']).split('\n')[0].trim()||document.title.replace(/[|].*/,'').replace(/올리브영.*/,'').trim();
+var price=g(['[class*="price-2"] strong','[class*="priceArea"] strong','[class*="salePrc"]','.price-1 strong']).replace(/[^0-9]/g,'');
+var rating=(g(['[class*="rvwScore"]','[class*="rvwPoint"]','[class*="avgScore"]']).match(/[0-9]+\.[0-9]+/)||['4.5'])[0];
+var reviews=g(['[class*="rvwCnt"]','[class*="reviewCnt"]','[class*="rvwNum"]']).replace(/[^0-9]/g,'')||'0';
+var imgEl=document.querySelector('.prd-img img,.goods-img img,[class*="prdImg"] img,[class*="goodsImg"] img');
+var image=imgEl?imgEl.src:'';
+if(!name||name.length<2){alert('제품명을 못 찾았어요!\n올리브영 제품 상세 페이지에서 실행해주세요.');return;}
+var data={name:name,price:price,rating:rating,reviews:reviews,image:image,url:window.location.href};
+var dest='${toolUrl}?add='+encodeURIComponent(JSON.stringify(data));
+if(confirm('✅ 수집 완료!\n\n'+name+'\n가격: '+(price||'미확인')+'원  별점: '+rating+'  리뷰: '+reviews+'건\n\n수집 도구로 이동할게요!')){location.href=dest;}
+})();`.replace(/\n/g,' ');
   document.getElementById("bmLink").href="javascript:"+encodeURIComponent(script);
 }
 makeBM();
 
-// 북마크릿 메시지 수신
-window.addEventListener("message",function(e){
-  if(e.data?.type==="glowie_add")addRow(e.data.data);
-});
-// URL 파라미터로 수신
+// URL 파라미터로 데이터 수신 (가장 안정적인 방법)
 (function(){
   const p=new URLSearchParams(window.location.search);
   const d=p.get("add");
-  if(d){try{addRow(JSON.parse(decodeURIComponent(d)));}catch(e){}
-  window.history.replaceState({},"",window.location.pathname);}
-  // localStorage 확인
-  const pending=localStorage.getItem("glowie_pending");
-  if(pending){try{const d=JSON.parse(pending);localStorage.removeItem("glowie_pending");setTimeout(()=>addRow(d),500);}catch(e){}}
+  if(d){
+    try{
+      const data=JSON.parse(decodeURIComponent(d));
+      window.history.replaceState({},"",window.location.pathname);
+      setTimeout(()=>addRow(data), 300);
+    }catch(e){ console.error("파싱 오류",e); }
+  }
 })();
 
 function addRow(data){
