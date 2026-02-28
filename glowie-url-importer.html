@@ -389,21 +389,17 @@ makeBM();
   }
 })();
 
-// chrome.storage 큐 polling — 확장 프로그램이 추가한 제품을 계속 읽어옴
+// BroadcastChannel — 같은 브라우저 탭끼리 통신
 (function(){
-  if(typeof chrome==='undefined'||!chrome?.storage?.local) return;
-  function poll(){
-    chrome.storage.local.get(['glowie_queue'],(res)=>{
-      const queue=res.glowie_queue||[];
-      if(queue.length>0){
-        chrome.storage.local.set({glowie_queue:[]});
-        queue.forEach(data=>addRow(data));
-        showNotify('✅ '+queue.length+'개 제품 추가됨!');
+  try {
+    const bc = new BroadcastChannel('glowie_channel');
+    bc.onmessage = (e) => {
+      if(e.data?.type === 'ADD_PRODUCT') {
+        addRow(e.data.data);
+        showNotify('✅ "' + e.data.data.name.slice(0,15) + '" 추가됨!');
       }
-    });
-  }
-  poll();
-  setInterval(poll, 1000);
+    };
+  } catch(e) { console.log('BroadcastChannel 미지원'); }
 })();
 
 
