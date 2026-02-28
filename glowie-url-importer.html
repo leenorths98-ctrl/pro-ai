@@ -332,26 +332,51 @@ function analyze(name,cat){
 // ── 북마크릿 생성 ──
 function makeBM(){
   const toolUrl=window.location.href.split('?')[0];
-  // 방식 변경: window.open/postMessage 완전 제거
-  // 올리브영에서 추출 → URL 파라미터에 담아 수집기로 직접 이동
   const script=`(function(){
-var g=function(s){for(var i=0;i<s.length;i++){var e=document.querySelector(s[i]);if(e&&e.innerText.trim())return e.innerText.trim();}return '';};
-var name=g(['.prd-name','.goods-name','[class*="prdName"]','[class*="goodsName"]']).split('\n')[0].trim()||document.title.replace(/[|].*/,'').replace(/올리브영.*/,'').trim();
-var price=g(['[class*="price-2"] strong','[class*="priceArea"] strong','[class*="salePrc"]','.price-1 strong']).replace(/[^0-9]/g,'');
-var rating=(g(['[class*="rvwScore"]','[class*="rvwPoint"]','[class*="avgScore"]']).match(/[0-9]+\.[0-9]+/)||['4.5'])[0];
-var reviews=g(['[class*="rvwCnt"]','[class*="reviewCnt"]','[class*="rvwNum"]']).replace(/[^0-9]/g,'')||'0';
-var imgEl=document.querySelector('.prd-img img,.goods-img img,[class*="prdImg"] img,[class*="goodsImg"] img');
-var image=imgEl?imgEl.src:'';
-if(!name||name.length<2){alert('제품명을 못 찾았어요!\n올리브영 제품 상세 페이지에서 실행해주세요.');return;}
+/* 올리브영 실제 DOM 구조 기반 셀렉터 */
+/* 제품명 */
+var name='';
+var nEls=[document.querySelector('h2.prd-name'),document.querySelector('.prd-name'),document.querySelector('.goods-name'),document.querySelector('h2')];
+for(var i=0;i<nEls.length;i++){if(nEls[i]&&nEls[i].innerText.trim().length>2){name=nEls[i].innerText.trim().split('\n')[0].trim();break;}}
+if(!name){name=document.title.replace(/\\s*[:\\|].*/,'').replace(/\\s*-\\s*올리브영.*/,'').trim();}
+
+/* 가격 - 올리브영은 할인가를 .price-2 em 에 표시 */
+var price='';
+var pEls=['.price-2 em','.price-2 strong','.price em','.sale-price em','[class*="price2"] em','[class*="salePrice"]','.final-price'];
+for(var i=0;i<pEls.length;i++){var el=document.querySelector(pEls[i]);if(el){var v=el.innerText.replace(/[^0-9]/g,'');if(v.length>=3){price=v;break;}}}
+/* 못 찾으면 페이지에서 원 단위 숫자 직접 탐색 */
+if(!price){var all=document.querySelectorAll('strong,em,b,span');for(var i=0;i<all.length;i++){var t=all[i].innerText.trim();if(/^[0-9]{4,6},?[0-9]{0,3}원$/.test(t)){price=t.replace(/[^0-9]/g,'');break;}}}
+
+/* 별점 - .rvw-grade, .grade-star, data-score 등 */
+var rating='4.5';
+var rSelectors=['.rvw-grade em','.rvw-point','.grade em','[class*="avgScore"]','[class*="rvwGrade"]','[class*="starScore"]'];
+for(var i=0;i<rSelectors.length;i++){var el=document.querySelector(rSelectors[i]);if(el){var m=el.innerText.match(/[0-9]+\.[0-9]+/);if(m){rating=m[0];break;}}}
+
+/* 리뷰수 - .rvw-num em, 리뷰 N건 패턴 */
+var reviews='0';
+var rvSelectors=['.rvw-num em','.rvw-num','.review-num','[class*="rvwNum"]','[class*="reviewCnt"]','[class*="rvwCnt"]'];
+for(var i=0;i<rvSelectors.length;i++){var el=document.querySelector(rvSelectors[i]);if(el){var v=el.innerText.replace(/[^0-9]/g,'');if(v){reviews=v;break;}}}
+/* 못 찾으면 "N건" 패턴 텍스트 탐색 */
+if(reviews==='0'){var all=document.querySelectorAll('span,em,a');for(var i=0;i<all.length;i++){var t=all[i].innerText.trim();if(/^[0-9,]+건$/.test(t)){reviews=t.replace(/[^0-9]/g,'');break;}}}
+
+/* 이미지 */
+var image='';
+var imgEls=['.prd-img img','.goods-img img','.product-img img','[class*="prdImg"] img','[class*="goodsImg"] img','.zoom img'];
+for(var i=0;i<imgEls.length;i++){var el=document.querySelector(imgEls[i]);if(el&&el.src&&el.src.startsWith('http')){image=el.src;break;}}
+
+if(!name||name.length<2){alert('제품명을 찾지 못했어요!\n올리브영 제품 상세 페이지에서 실행해주세요.');return;}
+
 var data={name:name,price:price,rating:rating,reviews:reviews,image:image,url:window.location.href};
-var dest='${toolUrl}?add='+encodeURIComponent(JSON.stringify(data));
-if(confirm('✅ 수집 완료!\n\n'+name+'\n가격: '+(price||'미확인')+'원  별점: '+rating+'  리뷰: '+reviews+'건\n\n수집 도구로 이동할게요!')){location.href=dest;}
+
+/* confirm 없이 바로 이동 + 현재창 이동 (새창X) */
+alert('✅ 수집됨!\n제품명: '+name+'\n가격: '+(price?price+'원':'미확인')+'\n별점: '+rating+' / 리뷰: '+reviews+'건\n\n수집 도구로 이동합니다!');
+location.href='${toolUrl}?add='+encodeURIComponent(JSON.stringify(data));
 })();`.replace(/\n/g,' ');
   document.getElementById("bmLink").href="javascript:"+encodeURIComponent(script);
 }
 makeBM();
 
-// URL 파라미터로 데이터 수신 (가장 안정적인 방법)
+// URL 파라미터로 데이터 수신
 (function(){
   const p=new URLSearchParams(window.location.search);
   const d=p.get("add");
@@ -363,6 +388,7 @@ makeBM();
     }catch(e){ console.error("파싱 오류",e); }
   }
 })();
+
 
 function addRow(data){
   const analysis=analyze(data.name,selectedCat);
