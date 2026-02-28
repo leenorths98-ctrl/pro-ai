@@ -389,17 +389,25 @@ makeBM();
   }
 })();
 
-// BroadcastChannel — 같은 브라우저 탭끼리 통신
+// URL 파라미터 + sessionStorage로 누적 저장
 (function(){
+  const STORE_KEY = 'glowie_rows';
+
+  // 기존 저장된 rows 복원
   try {
-    const bc = new BroadcastChannel('glowie_channel');
-    bc.onmessage = (e) => {
-      if(e.data?.type === 'ADD_PRODUCT') {
-        addRow(e.data.data);
-        showNotify('✅ "' + e.data.data.name.slice(0,15) + '" 추가됨!');
-      }
-    };
-  } catch(e) { console.log('BroadcastChannel 미지원'); }
+    const saved = sessionStorage.getItem(STORE_KEY);
+    if(saved) {
+      const savedRows = JSON.parse(saved);
+      savedRows.forEach(r => rows.push(r));
+      renderTable(); updateCount();
+    }
+  } catch(e) {}
+
+  // rows 변경될 때마다 sessionStorage에 저장
+  const origAddRow = addRow;
+  window._saveRows = function() {
+    try { sessionStorage.setItem(STORE_KEY, JSON.stringify(rows)); } catch(e) {}
+  };
 })();
 
 
@@ -414,6 +422,8 @@ function addRow(data){
     image:data.image||"",oliveyoung:data.url||"",
   });
   renderTable();updateCount();
+  // sessionStorage에 저장 (탭 새로고침해도 유지)
+  try{ sessionStorage.setItem('glowie_rows', JSON.stringify(rows)); }catch(e){}
   showNotify(`✅ "${data.name.slice(0,20)}" 추가됨!`);
 }
 
