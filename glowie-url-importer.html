@@ -412,11 +412,15 @@ makeBM();
 
 
 function addRow(data){
-  const analysis=analyze(data.name,selectedCat);
+  // 확장이 카테고리를 수집해왔으면 그걸 쓰고, 없으면 선택된 카테고리 사용
+  const cat = data.category || selectedCat;
+  const analysis=analyze(data.name,cat);
+  // 확장이 실제 성분을 수집해왔으면 그걸 쓰고, 없으면 AI 분석값 사용
+  const ingredient = data.ingredient || analysis.ingredient;
   rows.unshift({
     id:Date.now()+Math.random(),
-    name:data.name,brand:analysis.brand,category:selectedCat,
-    ingredient:analysis.ingredient,
+    name:data.name,brand:analysis.brand,category:cat,
+    ingredient:ingredient,
     skin_types:[...analysis.skin_types],concerns:[...analysis.concerns],tags:[...analysis.tags],
     price:data.price||"",rating:data.rating||"4.5",reviews:data.reviews||"0",
     image:data.image||"",oliveyoung:data.url||"",
